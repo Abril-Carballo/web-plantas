@@ -45,6 +45,15 @@ export class AuthService {
     return this.http.post<{ message: string }>(`${this.api}/resend-verification`, {});
   }
 
+  forgotPassword(email: string): Observable<{ message: string }> {
+  return this.http.post<{ message: string }>(`${this.api}/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, password: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.api}/reset-password`, { token, password });
+  }
+
+
   me(): Observable<SafeUser> {
     return this.http.get<SafeUser>(`${this.api}/me`).pipe(
       tap((user) => this.user.set(user)),
