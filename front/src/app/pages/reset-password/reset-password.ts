@@ -1,47 +1,58 @@
-import { Component, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-reset-password',
-  imports: [FormsModule],
+  imports: [FormsModule, CommonModule, RouterLink],
   templateUrl: './reset-password.html',
   styleUrl: './reset-password.css',
 })
-export class ResetPassword {
-  private route = inject(ActivatedRoute);
+export class ResetPassword implements OnInit {
   private auth = inject(AuthService);
+  private toast = inject(ToastService);
+  private route = inject(ActivatedRoute);
   private router = inject(Router);
 
+  token = '';
   password = '';
-  message = '';
-  error = '';
+  confirmPassword = '';
   loading = signal(false);
 
-  onSubmit() {
-    const token = this.route.snapshot.queryParamMap.get('token');
+  ngOnInit(): void {
+    this.token = this.route.snapshot.queryParams['token'] ?? '';
+  }
 
-    if (!token) {
-      this.error = 'Token inválido';
+  get passwordsMatch(): boolean {
+    return this.password === this.confirmPassword;
+  }
+
+  get isValid(): boolean {
+    return this.password.length >= 8 && this.passwordsMatch;
+  }
+
+  onSubmit(): void {
+    if (!this.passwordsMatch) {
+      this.toast.error('Las contraseñas no coinciden.');
+      return;
+    }
+    if (this.password.length < 8) {
+      this.toast.error('La contraseña debe tener al menos 8 caracteres.');
       return;
     }
 
     this.loading.set(true);
-    this.error = '';
-    this.message = '';
-
-    this.auth.resetPassword(token, this.password).subscribe({
-      next: (res) => {
-        this.message = res.message;
+    this.auth.resetPassword(this.token, this.password).subscribe({
+      next: () => {
+        this.toast.success('Contraseña actualizada');
         this.loading.set(false);
-
-        setTimeout(() => {
-          this.router.navigate(['/login']);
-        }, 1500);
+        this.router.navigate(['/login']);
       },
-      error: (e) => {
-        this.error = e.error?.message || 'Error al cambiar contraseña';
+      error: (err: any) => {
+        this.toast.error(err.error?.message ?? 'Token inválido o expirado.');
         this.loading.set(false);
       },
     });

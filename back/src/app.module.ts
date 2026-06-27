@@ -24,7 +24,7 @@ import { UserEntity } from './users/user.entity'; // LABORATORIO 2: entidad de u
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'as',
+      password: 'postgres',
       database: 'productos',
       entities: [ProductEntity, CategoryEntity, UserEntity],
       synchronize: true,

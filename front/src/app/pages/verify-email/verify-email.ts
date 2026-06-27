@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-verify-email',
@@ -12,32 +13,32 @@ import { AuthService } from '../../services/auth.service';
 export class VerifyEmailPage {
   private route = inject(ActivatedRoute);
   private auth = inject(AuthService);
+  private toast = inject(ToastService);
 
   loading = signal(true);
   success = signal(false);
-  message = signal('Verificando email...');
 
   constructor() {
     this.verify();
   }
 
   private async verify(): Promise<void> {
-    const token = this.route.snapshot.queryParamMap.get('token'); // App plantas: lee el token de la URL
+    const token = this.route.snapshot.queryParamMap.get('token');
 
     if (!token) {
+      this.toast.error('Token inválido o faltante');
       this.success.set(false);
-      this.message.set('Token inválido o faltante');
       this.loading.set(false);
       return;
     }
 
     try {
-      const res = await firstValueFrom(this.auth.verifyEmail(token)); // App plantas: llama al backend para verificar el email
+      await firstValueFrom(this.auth.verifyEmail(token));
+      this.toast.success('Email verificado correctamente');
       this.success.set(true);
-      this.message.set(res.message || 'Email verificado correctamente');
     } catch (err: any) {
+      this.toast.error(err.error?.message || 'Token inválido o expirado');
       this.success.set(false);
-      this.message.set(err.error?.message || 'Token inválido o expirado');
     } finally {
       this.loading.set(false);
     }

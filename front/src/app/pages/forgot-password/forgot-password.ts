@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-forgot-password',
@@ -10,29 +11,22 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './forgot-password.css',
 })
 export class ForgotPassword {
+  private auth = inject(AuthService);
+  private toast = inject(ToastService);
+
   email = '';
-  message = '';
-  error = '';
-  loading = signal(false)
+  loading = signal(false);
 
-  constructor(private authService: AuthService ) { }
-
-  onSubmit() {
-    this.message = '';
-    this.error = '';
-    this.loading.set(true)
-
-    this.authService.forgotPassword(this.email).subscribe({
-      next: (res) => {
-        this.message = res.message;
-         this.loading.set(false)
-        
+  onSubmit(): void {
+    this.loading.set(true);
+    this.auth.forgotPassword(this.email).subscribe({
+      next: () => {
+        this.toast.success('Si el email existe, recibirás un link');
+        this.loading.set(false);
       },
-      error: (e) => {
-        
-        this.error = 'Ocurrió un error, intentá de nuevo.';
-       
-         this.loading.set(false)
+      error: () => {
+        this.toast.error('Ocurrió un error, intentá de nuevo.');
+        this.loading.set(false);
       },
     });
   }
