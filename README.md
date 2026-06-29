@@ -93,8 +93,9 @@ Este proyecto fue desarrollado como trabajo práctico integrador con el objetivo
 
 ---
 
-## 👩‍💻 Autores
+## 👥 Autores
 
-**Abril Carballo**  GitHub: https://github.com/Abril-Carballo
-**Mateo Manera**
-**Valentina Luna Ruffini**
+- **Abril Carballo**
+  - GitHub: https://github.com/Abril-Carballo
+- **Mateo Manera**
+- **Valentina Luna Ruffini**
