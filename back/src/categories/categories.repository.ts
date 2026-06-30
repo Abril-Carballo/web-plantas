@@ -41,4 +41,8 @@ export class CategoriesRepository {
       relations: { products: true },
     }).then(e => e ?? undefined);
   }
+  async update(id: number, input: CreateCategoryInput): Promise<Category> {
+    await this.repo.update(id, input);
+    return this.repo.findOneBy({ id }) as Promise<Category>;
+  }
 }

@@ -17,8 +17,24 @@ export class CategoriesService {
     return category;
   }
 
-  create(input: CreateCategoryInput): Promise<Category> {
-    return this.categoriesRepository.create(input);
+  async create(input: CreateCategoryInput): Promise<Category> {
+    try {
+      return await this.categoriesRepository.create(input);
+    } catch (err: any) {
+      if (err.code === '23505') throw new ConflictException('Category name already exists');
+      throw err;
+    }
+  }
+
+  async update(id: number, input: CreateCategoryInput): Promise<Category> {
+    const category = await this.categoriesRepository.findById(id);
+    if (!category) throw new NotFoundException('Category not found');
+    try {
+      return await this.categoriesRepository.update(id, input);
+    } catch (err: any) {
+      if (err.code === '23505') throw new ConflictException('Category name already exists');
+      throw err;
+    }
   }
 
   async remove(id: number): Promise<Category> {

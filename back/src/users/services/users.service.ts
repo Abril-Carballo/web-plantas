@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { UserEntity } from '../user.entity'; 
 import * as bcrypt from 'bcrypt'; // para verificar y hashear contraseñas
 import { ConfigService } from '@nestjs/config'; 
+import { UserRole } from '../user-role.enum';
 
 @Injectable()
 export class UsersService {
@@ -57,24 +58,47 @@ export class UsersService {
     return { message: 'Password updated' };
   }
 
-  
-  async updateEmail(userId: string, newEmail: string, password: string): Promise<{ message: string }> {
-    const user = await this.usersRepo
-      .createQueryBuilder('u')
-      .addSelect('u.passwordHash') 
-      .where('u.id = :id', { id: userId })
-      .getOne();
+    async updateEmail(userId: string, newEmail: string, password: string): Promise<{ message: string }> {
+      const user = await this.usersRepo
+        .createQueryBuilder('u')
+        .addSelect('u.passwordHash') 
+        .where('u.id = :id', { id: userId })
+        .getOne();
 
-    if (!user) throw new UnauthorizedException('Usuario no encontrado');
+      if (!user) throw new UnauthorizedException('Usuario no encontrado');
 
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) throw new BadRequestException('La contraseña es incorrecta');
+      const ok = await bcrypt.compare(password, user.passwordHash);
+      if (!ok) throw new BadRequestException('La contraseña es incorrecta');
 
-    user.email = newEmail.trim().toLowerCase();
+      user.email = newEmail.trim().toLowerCase();
 
-    await this.usersRepo.save(user);
+      await this.usersRepo.save(user);
 
-    return { message: 'Email updated' };
+      return { message: 'Email updated' };
+    }
+
+  async updateRole(requesterId: string, targetId: string, role: string): Promise<{ id: string; email: string; role: string; isVerified: boolean }> {
+    if (requesterId === targetId) {
+      throw new BadRequestException('Cannot change your own role');
+    }
+
+    const target = await this.usersRepo.findOne({ where: { id: targetId } });
+    if (!target) throw new NotFoundException('Usuario no encontrado');
+
+    if (role === 'user' && target.role === 'admin') {
+      const adminCount = await this.usersRepo.count({ where: { role: UserRole.ADMIN } });
+      if (adminCount <= 1) throw new BadRequestException('Cannot demote the only admin');
+    }
+
+    target.role = role as UserRole;
+    await this.usersRepo.save(target);
+
+    return {
+      id: target.id,
+      email: target.email,
+      role: target.role,
+      isVerified: target.isVerified,
+    };
   }
 }
 
